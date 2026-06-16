@@ -1,119 +1,143 @@
-const express = require('express');
-const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const express = require('express')
+const router = express.Router()
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const User = require('../models/User')
+
+const generateFriendId = async () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let isUnique = false
+  let friendId
+
+  while (!isUnique) {
+    let id = 'WRLD#'
+    for (let i = 0; i < 6; i++) {
+      id += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    friendId = id
+    const existing = await User.findOne({ friendId })
+    if (!existing) isUnique = true
+  }
+
+  return friendId
+}
 
 // REGISTER
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password, displayName } = req.body;
+    const { username, email, password, displayName } = req.body
 
     // Check if user already exists
     const existingUser = await User.findOne({
       $or: [{ email }, { username }]
-    });
+    })
 
     if (existingUser) {
       return res.status(400).json({
         error: existingUser.email === email
           ? 'Email already in use'
           : 'Username already taken'
-      });
+      })
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, 12)
+
+    // Generate unique Friend ID
+    const friendId = await generateFriendId()
 
     // Create user
-    const user = new User({
+    const newUser = new User({
       username,
       email,
       password: hashedPassword,
-      displayName: displayName || username
-    });
+      displayName: displayName || username,
+      friendId
+    })
 
-    await user.save();
+    await newUser.save()
 
     // Generate token
     const token = jwt.sign(
-      { id: user._id, username: user.username },
+      { id: newUser._id, username: newUser.username },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
-    );
+    )
 
     res.status(201).json({
       token,
       user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        displayName: user.displayName,
-        avatar: user.avatar,
-        verified: user.verified
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+        displayName: newUser.displayName,
+        avatar: newUser.avatar,
+        verified: newUser.verified,
+        friendId: newUser.friendId
       }
-    });
+    })
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message })
   }
-});
+})
 
 // LOGIN
 router.post('/login', async (req, res) => {
   try {
-    const { emailOrUsername, password } = req.body;
+    const { emailOrUsername, password } = req.body
 
     // Find by email or username
-    const user = await User.findOne({
+    const existingUser = await User.findOne({
       $or: [
         { email: emailOrUsername },
         { username: emailOrUsername }
       ]
-    });
+    })
 
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (!existingUser) {
+      return res.status(401).json({ error: 'Invalid credentials' })
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, existingUser.password)
 
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid credentials' })
     }
 
     const token = jwt.sign(
-      { id: user._id, username: user.username },
+      { id: existingUser._id, username: existingUser.username },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
-    );
+    )
 
     res.json({
       token,
       user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        displayName: user.displayName,
-        avatar: user.avatar,
-        verified: user.verified
+        id: existingUser._id,
+        username: existingUser.username,
+        email: existingUser.email,
+        displayName: existingUser.displayName,
+        avatar: existingUser.avatar,
+        verified: existingUser.verified,
+        friendId: existingUser.friendId
       }
-    });
+    })
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message })
   }
-});
+})
 
 // GET current user (protected)
 router.get('/me', async (req, res) => {
   try {
-    const auth = require('../middleware/auth');
-    const user = await User.findById(req.user.id).select('-password');
-    res.json(user);
+    const auth = require('../middleware/auth')
+    const foundUser = await User.findById(req.user.id).select('-password')
+    res.json(foundUser)
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message })
   }
-});
+})
 
-module.exports = router;
+module.exports = router

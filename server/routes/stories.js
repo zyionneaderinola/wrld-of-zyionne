@@ -4,6 +4,10 @@ const Story = require('../models/Story')
 const User = require('../models/User')
 const auth = require('../middleware/auth')
 const { upload } = require('../config/cloudinary')
+const { extractMentions, notifyMentions } = require('../utils/mentions')
+const Notification = require('../models/Notification')
+const { getIO } = require('../socket')
+
 
 // CREATE story
 router.post('/', auth, upload.single('media'), async (req, res) => {
@@ -109,6 +113,71 @@ router.delete('/:id', auth, async (req, res) => {
 
     await story.deleteOne()
     res.json({ message: 'Story deleted' })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// REPLY TO A STORY
+router.post('/:id/reply', auth, async (req, res) => {
+  try {
+    const story = await Story.findById(req.params.id)
+    if (!story) return res.status(404).json({ error: 'Story not found' })
+
+    const { content } = req.body
+    const mentionedUserIds = await extractMentions(content)
+
+    // Story replies go to DMs automatically
+    const Conversation = require('../models/Conversation')
+    const Message = require('../models/Message')
+
+    // Find or create conversation between replier and story author
+    let conversation = await Conversation.findOne({
+      isGroup: false,
+      participants: {
+        $all: [req.user.id, story.author.toString()],
+        $size: 2
+      }
+    })
+
+    if (!conversation) {
+      conversation = new Conversation({
+        participants: [req.user.id, story.author],
+        isGroup: false
+      })
+      await conversation.save()
+    }
+
+    // Send reply as a message
+    const message = new Message({
+      conversation: conversation._id,
+      sender: req.user.id,
+      content: `Replied to your story: ${content}`,
+    })
+
+    await message.save()
+
+    // Notify story author
+    if (story.author.toString() !== req.user.id) {
+      const notification = new Notification({
+        recipient: story.author,
+        sender: req.user.id,
+        type: 'comment',
+        message: 'replied to your story'
+      })
+      await notification.save()
+
+      const io = getIO()
+      io.to(story.author.toString()).emit('notification', notification)
+      io.to(story.author.toString()).emit('newMessage', {
+        conversationId: conversation._id,
+        message
+      })
+    }
+
+    await notifyMentions(mentionedUserIds, req.user.id, null, 'mention')
+
+    res.status(201).json({ message: 'Story reply sent as DM' })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

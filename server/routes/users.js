@@ -106,4 +106,30 @@ router.patch('/profile/update', auth, async (req, res) => {
   }
 });
 
+// UPDATE purpose — user changes their aim anytime
+router.patch('/profile/purpose', auth, async (req, res) => {
+  try {
+    const { purpose, worlds, interests } = req.body
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        ...(purpose && { purpose }),
+        ...(worlds && { worlds }),
+        ...(interests && { interests })
+      },
+      { new: true }
+    ).select('-password')
+
+    res.json({
+      message: 'Your WRLD has been updated',
+      purpose: user.purpose,
+      worlds: user.worlds,
+      interests: user.interests
+    })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 module.exports = router;

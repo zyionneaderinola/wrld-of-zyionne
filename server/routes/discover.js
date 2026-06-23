@@ -221,4 +221,26 @@ router.get('/suggested/forums', auth, async (req, res) => {
   }
 })
 
+// SUGGESTED users — based on shared worlds, interests, and purpose
+router.get('/suggested', auth, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id)
+
+    const suggested = await User.find({
+      _id: { $nin: [...currentUser.following, req.user.id] },
+      $or: [
+        { worlds: { $in: currentUser.worlds } },
+        { interests: { $in: currentUser.interests } },
+        { purpose: { $in: currentUser.purpose } }
+      ]
+    })
+      .select('username displayName avatar verified followers worlds purpose')
+      .limit(10)
+
+    res.json(suggested)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
 module.exports = router

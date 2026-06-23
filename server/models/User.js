@@ -36,6 +36,37 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  appearance: {
+   mode: {
+      type: String,
+     enum: ['light', 'dark'],
+     default: 'dark'
+    },
+    primaryColor: {
+      type: String,
+      default: '#FFD700'
+    },
+   backgroundColor: {
+      type: String,
+     default: '#0D0D0D'
+    },
+    accentColor: {
+      type: String,
+      default: '#FFD700'
+   },
+   font: {
+      type: String,
+     default: 'Montserrat'   // ← confirm this is here
+    },
+   typingFont: {
+      type: String,
+     default: 'Montserrat'   // ← and this
+   },
+    customFontUrl: {
+      type: String,
+     default: ''
+   }
+  },
   verified: {
     type: Boolean,
     default: false
@@ -116,11 +147,77 @@ const UserSchema = new mongoose.Schema({
       type: Date
     }
   }],
-  analytics: {
+  analytics: [{
     totalImpressions: { type: Number, default: 0 },
     totalReach: { type: Number, default: 0 },
     totalProfileVisits: { type: Number, default: 0 }
-  }
+  }],
+
+  worlds: [{
+    type: String,
+    enum: [
+      'stem',
+      'arts_humanities',
+      'finance',
+      'law',
+      'business',
+      'medicine_health',
+      'education',
+      'creative',
+      'sports',
+      'gaming',
+      'faith_spirituality',
+      'politics_society',
+      'entertainment',
+      'food',
+      'travel',
+      'careers',
+      'kids',
+    ]
+  }],
+  careerProfile: {
+    sector: { type: String, default: '' },
+    role: { type: String, default: '' },
+    experience: {
+      type: String,
+      enum: [
+        'student',
+        'entry_level',
+        'mid_level',
+        'senior',
+        'executive',
+        'freelance',
+        'entrepreneur',
+        'not_sure'
+      ],
+    default: 'not_sure'
+  },
+
+  purpose: [{
+   type: String,
+    enum: [
+      'just_having_fun',
+      'building_career',
+      'learning',
+      'networking',
+      'building_business',
+      'creating_content',
+     'finding_community',
+      'dating',
+      'shopping',
+      'staying_informed',
+      'fitness',
+      'gaming',
+      'finding_work',
+      'mentoring_others',
+      'being_mentored',
+     'exploring'
+    ]
+  }],
+  skills: [{ type: String }],
+  open_to_opportunities: { type: Boolean, default: false }
+},
+interests: [{ type: String }],
 }, { timestamps: true })
 
 module.exports = mongoose.model('User', UserSchema)

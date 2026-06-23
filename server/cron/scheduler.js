@@ -1,14 +1,16 @@
 const cron = require('node-cron')
 const Post = require('../models/Post')
 const Article = require('../models/Article')
+const Child = require('../models/LittleWRLD/Child')
+const { getIO } = require('../socket')
 
 const startScheduler = () => {
 
+  // Every minute — publish scheduled posts and articles
   cron.schedule('* * * * *', async () => {
     try {
       const now = new Date()
 
-      // Publish scheduled posts
       const postsToPublish = await Post.find({
         status: 'scheduled',
         publishAt: { $lte: now }
@@ -23,7 +25,6 @@ const startScheduler = () => {
         console.log(`✅ Published ${postsToPublish.length} scheduled post(s)`)
       }
 
-      // Publish scheduled articles
       const articlesToPublish = await Article.find({
         status: 'scheduled',
         publishAt: { $lte: now }
@@ -43,7 +44,57 @@ const startScheduler = () => {
     }
   })
 
-  console.log('📅 Scheduler is running')
+  // Daily at midnight — check for graduation eligible children
+  cron.schedule('0 0 * * *', async () => {
+    try {
+      const today = new Date()
+      const children = await Child.find({ hasGraduated: false })
+
+      for (const child of children) {
+        const birth = new Date(child.dateOfBirth)
+        let age = today.getFullYear() - birth.getFullYear()
+        const monthDiff = today.getMonth() - birth.getMonth()
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+          age--
+        }
+
+        if (age >= 21) {
+          // Notify parent that child is ready to graduate
+          const io = getIO()
+          io.to(child.parentAccount.toString()).emit('graduationReady', {
+            child: {
+              id: child._id,
+              displayName: child.displayName,
+              age
+            },
+            message: `${child.displayName} is now 21 and ready to graduate to main WRLD!`
+          })
+
+          console.log(`🎓 ${child.displayName} is eligible for graduation`)
+        }
+      }
+    } catch (err) {
+      console.error('Graduation check error:', err.message)
+    }
+  })
+
+  // Reset daily screen time at midnight
+  cron.schedule('0 0 * * *', async () => {
+    try {
+      await Child.updateMany(
+        {},
+        {
+          'screenTime.todayUsageMinutes': 0,
+          'screenTime.lastUsageReset': new Date()
+        }
+      )
+      console.log('⏱️ Screen time reset for all Little WRLD accounts')
+    } catch (err) {
+      console.error('Screen time reset error:', err.message)
+    }
+  })
+
+  console.log('📅 WRLD Scheduler is running')
 }
 
 module.exports = { startScheduler }

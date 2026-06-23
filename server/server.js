@@ -21,6 +21,14 @@ const communityRoutes = require('./routes/communities')
 const moderationRoutes = require('./routes/moderation')
 const archiveRoutes = require('./routes/archive')
 const articleRoutes = require('./routes/articles')
+const locketRoutes = require('./routes/lockets')
+const fontRoutes = require('./routes/fonts')
+
+// Little WRLD
+const childAuthRoutes = require('./routes/littleWRLD/childAuth')
+const childContentRoutes = require('./routes/littleWRLD/childContent')
+const parentMonitorRoutes = require('./routes/littleWRLD/parentMonitor')
+const graduationRoutes = require('./routes/littleWRLD/graduation')
 
 const app = express()
 const server = http.createServer(app)
@@ -43,6 +51,7 @@ app.get('/', (req, res) => {
   res.send('WRLD server is running!')
 })
 
+// Main WRLD routes
 app.use('/api/auth', authRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/users', userRoutes)
@@ -57,6 +66,14 @@ app.use('/api/communities', communityRoutes)
 app.use('/api/moderation', moderationRoutes)
 app.use('/api/archive', archiveRoutes)
 app.use('/api/articles', articleRoutes)
+app.use('/api/lockets', locketRoutes)
+app.use('/api/fonts', fontRoutes)
+
+// Little WRLD routes
+app.use('/api/little/auth', childAuthRoutes)
+app.use('/api/little/content', childContentRoutes)
+app.use('/api/little/parent', parentMonitorRoutes)
+app.use('/api/little/graduation', graduationRoutes)
 
 server.listen(port, () => {
   console.log(`WRLD server is running on port ${port}`)

@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root {
+  /* WRLD Default — Black and Gold */
+  --color-primary: #FFD700;
+  --color-primary-dark: #B8960C;
+  --color-primary-light: #FFE55C;
+  --color-bg: #0D0D0D;
+  --color-bg-card: #141414;
+  --color-bg-surface: #1A1A1A;
+  --color-bg-elevated: #222222;
+  --color-text: #F5F5F5;
+  --color-text-muted: #888888;
+  --color-text-faint: #444444;
+  --color-border: rgba(255, 215, 0, 0.12);
+  --color-border-strong: rgba(255, 215, 0, 0.3);
+
+  /* Typography */
+  --font-primary: 'Montserrat', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  /* Spacing */
+  --nav-height: 60px;
+  --bottom-nav-height: 64px;
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 60px;
+}
+
+/* Dark mode is default */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-primary);
+}
+
+/* Light mode override */
+[data-theme="light"] {
+  --color-bg: #FAFAFA;
+  --color-bg-card: #FFFFFF;
+  --color-bg-surface: #F0F0F0;
+  --color-bg-elevated: #E8E8E8;
+  --color-text: #0D0D0D;
+  --color-text-muted: #555555;
+  --color-text-faint: #AAAAAA;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-strong: rgba(0, 0, 0, 0.2);
+}

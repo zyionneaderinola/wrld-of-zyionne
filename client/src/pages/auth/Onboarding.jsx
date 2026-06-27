@@ -54,6 +54,11 @@ const WORLDS = [
 export default function Onboarding() {
   const [step, setStep] = useState(1)
   const [selectedWorlds, setSelectedWorlds] = useState([])
+  const [careerProfile, setCareerProfile] = useState({
+  sector: '',
+  role: '',
+  experience: 'not_sure'
+})
   const [selectedPurposes, setSelectedPurposes] = useState([])
   const [loading, setLoading] = useState(false)
   const { user, updateUser } = useAuth()
@@ -76,19 +81,26 @@ export default function Onboarding() {
   }
 
   const handleFinish = async () => {
-    setLoading(true)
+   setLoading(true)
     try {
       await axios.patch(`${API}/api/users/profile/purpose`, {
-        worlds: selectedWorlds,
-        purpose: selectedPurposes
-      })
-      updateUser({ worlds: selectedWorlds, purpose: selectedPurposes })
-      navigate('/')
+      worlds: selectedWorlds,
+      purpose: selectedPurposes
+    })
+    await axios.patch(`${API}/api/users/profile/update`, {
+      careerProfile
+    })
+    updateUser({
+      worlds: selectedWorlds,
+      purpose: selectedPurposes,
+      careerProfile
+    })
+    navigate('/')
     } catch (err) {
       console.error(err)
-      navigate('/')
+     navigate('/')
     } finally {
-      setLoading(false)
+    setLoading(false)
     }
   }
 
@@ -140,30 +152,34 @@ export default function Onboarding() {
             WRLD
           </h1>
           <h2 className="text-2xl font-bold mb-2"
-            style={{ color: 'var(--color-text)' }}>
-            {step === 1
-              ? `Welcome, ${user?.displayName || user?.username} 👋`
-              : 'What brings you to WRLD?'}
-          </h2>
-          <p className="text-sm"
-            style={{ color: 'var(--color-text-muted)' }}>
-            {step === 1
-              ? 'Pick the worlds you want to be part of. You can always change this later.'
-              : 'Pick everything that applies. No wrong answers.'}
-          </p>
+           style={{ color: 'var(--color-text)' }}>
+          {step === 1
+          ? `Welcome, ${user?.displayName || user?.username} 👋`
+          : step === 2
+           ? 'What brings you to WRLD?'
+          : 'Tell us about yourself'}
+        </h2>
+        <p className="text-sm"
+        style={{ color: 'var(--color-text-muted)' }}>
+        {step === 1
+        ? 'Pick the worlds you want to be part of. You can always change this later.'
+        : step === 2
+        ? 'Pick everything that applies. No wrong answers.'
+        : 'Help us personalise your experience. Completely optional.'}
+        </p>
         </div>
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2].map(s => (
-            <div key={s} className="h-1.5 rounded-full transition-all"
-              style={{
-                width: step === s ? '32px' : '16px',
-                backgroundColor: step >= s
-                  ? 'var(--color-primary)'
-                  : 'var(--color-border)'
-              }} />
-          ))}
+         {[1, 2, 3].map(s => (
+          <div key={s} className="h-1.5 rounded-full transition-all"
+          style={{
+          width: step === s ? '32px' : '16px',
+          backgroundColor: step >= s
+           ? 'var(--color-primary)'
+          : 'var(--color-border)'
+          }} />
+        ))}
         </div>
 
         {/* Step 1 — Worlds */}
@@ -208,7 +224,7 @@ export default function Onboarding() {
                 Skip for now
               </button>
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 className="flex-1 py-3 rounded-xl text-sm font-bold tracking-widest uppercase"
                 style={{
                   backgroundColor: 'var(--color-primary)',
@@ -283,3 +299,136 @@ export default function Onboarding() {
     </div>
   )
 }
+
+{step === 3 && (
+  <div className="flex flex-col gap-4 mb-8">
+
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-semibold tracking-widest uppercase"
+        style={{ color: 'var(--color-text-muted)' }}>
+        Your Sector
+        <span className="ml-2 normal-case font-normal tracking-normal"
+          style={{ color: 'var(--color-text-faint)' }}>
+          (optional)
+        </span>
+      </label>
+      <input
+        value={careerProfile.sector}
+        onChange={e => setCareerProfile({
+          ...careerProfile, sector: e.target.value
+        })}
+        placeholder="e.g. Technology, Medicine, Law, Arts..."
+        className="px-4 py-3 rounded-xl text-sm outline-none transition-all"
+        style={{
+          backgroundColor: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text)',
+          fontFamily: 'var(--font-primary)'
+        }}
+        onFocus={e => e.target.style.borderColor = 'var(--color-primary)'}
+        onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
+      />
+    </div>
+
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-semibold tracking-widest uppercase"
+        style={{ color: 'var(--color-text-muted)' }}>
+        Your Role
+        <span className="ml-2 normal-case font-normal tracking-normal"
+          style={{ color: 'var(--color-text-faint)' }}>
+          (optional)
+        </span>
+      </label>
+      <input
+        value={careerProfile.role}
+        onChange={e => setCareerProfile({
+          ...careerProfile, role: e.target.value
+        })}
+        placeholder="e.g. Software Engineer, Student, Designer..."
+        className="px-4 py-3 rounded-xl text-sm outline-none transition-all"
+        style={{
+          backgroundColor: 'var(--color-bg-surface)',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text)',
+          fontFamily: 'var(--font-primary)'
+        }}
+        onFocus={e => e.target.style.borderColor = 'var(--color-primary)'}
+        onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
+      />
+    </div>
+
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-semibold tracking-widest uppercase"
+        style={{ color: 'var(--color-text-muted)' }}>
+        Where are you in your journey?
+      </label>
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { id: 'student', label: 'Student', emoji: '🎓' },
+          { id: 'entry_level', label: 'Entry Level', emoji: '🌱' },
+          { id: 'mid_level', label: 'Mid Level', emoji: '📈' },
+          { id: 'senior', label: 'Senior', emoji: '⭐' },
+          { id: 'executive', label: 'Executive', emoji: '👔' },
+          { id: 'freelance', label: 'Freelance', emoji: '💻' },
+          { id: 'entrepreneur', label: 'Entrepreneur', emoji: '🚀' },
+          { id: 'not_sure', label: 'Not sure yet', emoji: '🧭' },
+        ].map(exp => (
+          <button
+            key={exp.id}
+            type="button"
+            onClick={() => setCareerProfile({
+              ...careerProfile, experience: exp.id
+            })}
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all"
+            style={{
+              backgroundColor: careerProfile.experience === exp.id
+                ? 'rgba(255,215,0,0.1)'
+                : 'var(--color-bg-surface)',
+              border: careerProfile.experience === exp.id
+                ? '1px solid rgba(255,215,0,0.5)'
+                : '1px solid var(--color-border)',
+              cursor: 'pointer'
+            }}>
+            <span>{exp.emoji}</span>
+            <span className="text-xs font-medium"
+              style={{
+                color: careerProfile.experience === exp.id
+                  ? 'var(--color-primary)'
+                  : 'var(--color-text)'
+              }}>
+              {exp.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div className="flex gap-3 mt-2">
+      <button
+        onClick={() => setStep(2)}
+        className="flex-1 py-3 rounded-xl text-sm font-bold tracking-widest uppercase"
+        style={{
+          backgroundColor: 'transparent',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text-muted)',
+          cursor: 'pointer'
+        }}>
+        Back
+      </button>
+      <button
+        onClick={handleFinish}
+        disabled={loading}
+        className="flex-1 py-3 rounded-xl text-sm font-bold tracking-widest uppercase"
+        style={{
+          backgroundColor: loading
+            ? 'var(--color-text-faint)'
+            : 'var(--color-primary)',
+          color: '#0D0D0D',
+          cursor: loading ? 'not-allowed' : 'pointer'
+        }}>
+        {loading ? 'Setting up...' : 'Enter WRLD 🌍'}
+      </button>
+    </div>
+
+  </div>
+)}

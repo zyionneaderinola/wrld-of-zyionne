@@ -26,6 +26,8 @@ const WORLDS = [
   { id: 'beauty', label: 'Beauty', emoji: '💄' },
   { id: 'food', label: 'Food & Cooking', emoji: '🍜' },
   { id: 'travel', label: 'Travel', emoji: '✈️' },
+  { id: 'entertainment_industry', label: 'Entertainment Industry', emoji: '🎤' },
+  { id: 'content_creator', label: 'Content Creator', emoji: '📱' },
   { id: 'sports', label: 'Sports', emoji: '⚽' },
   { id: 'fitness', label: 'Fitness', emoji: '💪' },
   { id: 'gaming', label: 'Gaming', emoji: '🎮' },
@@ -360,6 +362,7 @@ export default function Onboarding() {
                   { id: 'executive', label: 'Executive', emoji: '👔' },
                   { id: 'freelance', label: 'Freelance', emoji: '💻' },
                   { id: 'entrepreneur', label: 'Entrepreneur', emoji: '🚀' },
+                  { id: 'creative_professional', label: 'Creative Professional', emoji: '🎭' },
                   { id: 'not_sure', label: 'Not sure yet', emoji: '🧭' },
                 ].map(exp => (
                   <button
